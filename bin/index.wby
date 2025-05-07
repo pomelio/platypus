@@ -1,3 +1,22 @@
 import ext.web as web;
+import local.platypus as platypus;
+import ext.google as google;
 
-web.body('hello world');
+
+var web_path = web.path();
+var method = web.method();
+
+
+if (web_path == '/auth/google/callback') {
+    var {code} = web.query();
+    var token = platypus.handle_auth_callback(code);
+    web.redirect(`/login?token=${token}`);
+    return;
+} else if (web_path == '/auth/google/login') {
+    var scope = ['https://www.googleapis.com/auth/userinfo.email','https://www.googleapis.com/auth/userinfo.profile','https://www.googleapis.com/auth/gmail.modify','https://www.googleapis.com/auth/gmail.send'];
+    var login_url = google.authorize_url(scope);
+    web.redirect(login_url);
+    return;
+} else {
+    web.set_status(404);
+}

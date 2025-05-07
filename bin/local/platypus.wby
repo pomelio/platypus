@@ -1,0 +1,41 @@
+import ext.google as google;
+import ext.mongodb as mongodb;
+import ext.jwt as jwt;
+import std.date as date;
+
+function handle_auth_callback(code) {
+    pause;
+    google.init_from_code(code);
+    var uinfo = google.user_info();
+    var token = google.get_token();
+
+    var email = uinfo['email'];
+
+    var DB = 'platypus';
+
+    mongodb.connect();
+
+    var filter = {email};
+    var timestamp = date.now();
+    
+    var doc = mongodb.find_one(DB, 'token', filter);
+    if (!doc) {
+        var _id = uuid();
+        
+        var doc = {
+            _id,
+            email,
+            timestamp,
+            ...token
+        };
+        mongodb.insert_one(DB, 'token', doc);
+    } else {
+        var update = { $set: { ...token }};
+        mongodb.update_one(DB, 'token', filter, update, {});
+    }
+    
+    
+    var jwtToken = jwt.sign({email, timestamp});
+
+    return jwtToken;
+}
